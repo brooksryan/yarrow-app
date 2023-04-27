@@ -1,28 +1,28 @@
 import os
-import io
 import tempfile
 import random
 import speech_recognition as sr
-from gtts import gTTS
 import simpleaudio as sa
-from pydub import AudioSegment
-import openai
+import requests
 import pyaudio
+import openai
+
+COQUI_API_TOKEN = "py00vG5IM940cT8J5g2cio9UFXfmNKKMOCXciZdzm3qoxJMu419AuNbiALzDguDC"
 
 def transcribe_speech():
-    r = sr.Recognizer() # initialize recognizer
-    with sr.Microphone() as source: # microphone as source
-        print("Please say something...") # message to the user
-        audio = r.listen(source) # listen for the first phrase and extract it into audio data
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Please say something...")
+        audio = r.listen(source)
     try:
-        text = r.recognize_google(audio) # recognize speech using Google Speech Recognition
+        text = r.recognize_google(audio)
         print(f"You said: {text}") 
         return text
     except:
         print("Sorry, I didn't catch that. Please try again.")
         return None
 
-
+# Generate a random question for the user
 def generate_question():
     question = [
         "Where do you see yourself in five years?",
@@ -39,29 +39,37 @@ def generate_gpt_response(conversation):
     return res['choices'][0]['message']['content'].strip() # return the completion
 
 def text_to_speech(text):
-    tts = gTTS(text=text, lang="en")
-    with tempfile.NamedTemporaryFile(delete=True) as fp:
-        temp_path = f"{fp.name}.mp3"
-        tts.save(temp_path)
+    text = text[:250]  # Coqui TTS has a 250 character limit
+    url = "https://app.coqui.ai/api/v2/samples"
+    headers = {
+        "Authorization": f"Bearer {COQUI_API_TOKEN}",
+        "content-type": "application/json",
+    }
+    data = {
+        "name": "temporary_sample",
+        "voice_id": "f05c5b91-7540-4b26-b534-e820d43065d1",
+        "text": text,
+        "emotion": "Happy",
+    }
 
-        # Convert the MP3 file to WAV
-        mp3_audio = AudioSegment.from_mp3(temp_path)
-        with tempfile.NamedTemporaryFile(delete=True) as wav_fp:
-            temp_wav_path = f"{wav_fp.name}.wav"
-            mp3_audio.export(temp_wav_path, format="wav")
+    response = requests.post(url, headers=headers, json=data)
+    response_json = response.json()
 
-            # Load the WAV audio file
-            with open(temp_wav_path, 'rb') as f:
-                audio_data = f.read()
+    if 'audio_url' not in response_json:
+        print(f"Error: Coqui API response does not contain 'audio_url':\n{response_json}")
+        return None
 
-            # Play the WAV audio file
-            wave_obj = sa.WaveObject.from_wave_file(io.BytesIO(audio_data))
-            play_obj = wave_obj.play()
-            play_obj.wait_done()
+    audio_url = response_json["audio_url"]
+    audio_response = requests.get(audio_url)
 
-            os.remove(temp_wav_path)
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(audio_response.content)
+        temp_filename = f.name
 
-        os.remove(temp_path)
+    wav_obj = sa.WaveObject.from_wave_file(temp_filename)
+    os.unlink(temp_filename)  # delete the temporary file after creating the WaveObject
+
+    return wav_obj
 
 def show_active_microphone():
     p = pyaudio.PyAudio()
@@ -87,7 +95,7 @@ def main():
     print("Welcome to the Job Interview Practice Program!")
     while True:
         conversation = [
-            {"role": "system", "content": "You are interviewing the candidate for a product management position at a tech company. Respond as though you are the interviewer and the candidate is the interviewee. Be extremely critical of the candidate's answers. You can use the [satisfied] token to indicate that you are satisfied with the candidate's answer."},
+            {"role": "system", "content": "You are interviewing the candidate for a product management position at a tech company. Respond as though you are the interviewer and the candidate is the interviewee. Be extremely critical of the candidate's answers. You can use the [satisfied] token to indicate that you are satisfied with the candidate's answer. "},
             {"role": "user", "content": "Hi, my name is Brooks, I'm excited to be here today. Let's get started."},
         ]
 
@@ -98,7 +106,8 @@ def main():
 
         while True:
             print("Interviewer: ", question)
-            text_to_speech(question)
+            wav_obj = text_to_speech(question)
+            wav_obj.play().wait_done()
             response = transcribe_speech()
 
             if response is None:
@@ -118,7 +127,8 @@ def main():
             print(conversation)
 
         print("Interviewer: ", gpt_response)
-        text_to_speech(gpt_response)
+        wav_obj = text_to_speech(gpt_response)
+        wav_obj.play().wait_done()
 
         # You can add more logic here to evaluate the user's response or give feedback.
 
