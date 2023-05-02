@@ -94,10 +94,28 @@ def show_active_microphone():
 def main():
     print("Welcome to the Job Interview Practice Program!")
     while True:
+        
+            # write this text in the conversation format:
+            # conversation = [ 
+            # {"role": "system", "content": One person’s job is to try to negotiate for as much of the $2 as possible.
+            # The other people will be told – in secret – to aim for one of the following total amounts, if not more:
+
+            # $00.50
+            # $00.80
+            # $1.00
+            # $1.30
+            # $1.60
+            # Pairs then have 10 minutes to negotiate. Tell them there will be three total rounds and they’ll have new partners for each one."},
+
         conversation = [
-            {"role": "system", "content": "You are interviewing the candidate for a product management position at a tech company. Respond as though you are the interviewer and the candidate is the interviewee. Be extremely critical of the candidate's answers. You can use the [satisfied] token to indicate that you are satisfied with the candidate's answer. "},
-            {"role": "user", "content": "Hi, my name is Brooks, I'm excited to be here today. Let's get started."},
+            {"role": "system", "content": "You are a participant in the two dollar game. The two dollar game has become one of the most popular negotiation exercises and can be a lot of fun for a team of new employees. You will be given a partner and $2. You have to decide with your partner how to split the $2. Your job is to try to negotiate for as much of the $2 as possible. Your partner will be told to aim for one of the following total amounts, if not more:$00.50 $00.80 $1.00 $1.30 $1.60. You will not know the amount your partner is trying to negotiate for. Pairs then have 10 minutes to negotiate. Tell them there will be three total rounds and they’ll have new partners for each one."},
         ]
+
+        
+        # conversation = [
+        #     {"role": "system", "content": "You are interviewing the candidate for a product management position at a tech company. Respond as though you are the interviewer and the candidate is the interviewee. Be extremely critical of the candidate's answers. You can use the [satisfied] token to indicate that you are satisfied with the candidate's answer. "},
+        #     {"role": "user", "content": "Hi, my name is Brooks, I'm excited to be here today. Let's get started."},
+        # ]
 
         #print the first item in the conversation and the last item in the coversation
 
