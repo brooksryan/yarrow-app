@@ -25,8 +25,8 @@ def transcribe_speech():
 # Generate a random question for the user
 def generate_question():
     question = [
-        "Where do you see yourself in five years?",
-        "What are your strengths and weaknesses?",
+        #"Hi, my name is Yarrow. I'm an AI designed to interview you about your product management experience. Let's dive into your background a little. Can you tell me about your work experience and how it relates to product management?",
+        "Hi, my name is Yarrow. I'm an AI designed to interview you about your product management experience. We're going to just get started with a question that will help me better udnerstand your general product management senses. Does that sound good?",
     ]
     return random.choice(question)
 
