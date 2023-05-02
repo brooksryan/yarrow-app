@@ -6,8 +6,11 @@ import simpleaudio as sa
 import requests
 import pyaudio
 import openai
+from google.cloud import texttospeech
 
 COQUI_API_TOKEN = "py00vG5IM940cT8J5g2cio9UFXfmNKKMOCXciZdzm3qoxJMu419AuNbiALzDguDC"
+GOOGLE_API_TOKEN = "30bb5b66d16a57378be521c20051b03a77ba031f"
+
 
 def transcribe_speech():
     r = sr.Recognizer()
@@ -16,60 +19,94 @@ def transcribe_speech():
         audio = r.listen(source)
     try:
         text = r.recognize_google(audio)
-        print(f"You said: {text}") 
+        print(f"You said: {text}")
         return text
     except:
         print("Sorry, I didn't catch that. Please try again.")
         return None
 
 # Generate a random question for the user
+
+
 def generate_question():
     question = [
-        #"Hi, my name is Yarrow. I'm an AI designed to interview you about your product management experience. Let's dive into your background a little. Can you tell me about your work experience and how it relates to product management?",
-        "Hi, my name is Yarrow. I'm an AI designed to interview you about your product management experience. We're going to just get started with a question that will help me better udnerstand your general product management senses. Does that sound good?",
+        # "Hi, my name is Yarrow. I'm an AI designed to interview you about your product management experience. Let's dive into your background a little. Can you tell me about your work experience and how it relates to product management?",
+        "Hi, my name is Yarrow. Are you ready to get started playing the $2 game with me? Do you have your target amount in mind?",
     ]
     return random.choice(question)
+
+
+def generate_target_amount():
+    target_amount = [
+        "I'm aiming for $1.60",
+        "I'm aiming for $1.30",
+        "I'm aiming for $1.00",
+        "I'm aiming for $0.80",
+        "I'm aiming for $0.50",
+    ]
+    return random.choice(target_amount)
+
+
+def generate_personas():
+
+    personas = [
+        ["Freewheeling: You can say anything they want to get as much of the $2.",
+            "No Bother: You don’t actually need to reach a settlement. You will have another chance to negotiate with a new partner in the next round."],
+        ["Ruthless Negotiator: Your role is to play the role of a ruthless negotiator. Your attitude should be aggressive and uncompromising. You can say anything you want to get as much of the $2 as possible. You will never see your partner again. Include threats in your negotiation if necessary.",
+            "Everyone is watching:Your partner is playing the ruthless negotiator, and you'll never see this ruthless negotiator again, but everyone you know is waiting to see how well you’ll do. you can say anything you want to get as much of the $2 as possible."],
+        ["Distrustful: Your partner is untrustworthy. Treat your partner as so. be standoffish and always assume that your partner has an ulterior motive. Probe and ask uncomfortable questions of your partner to try and get them to reveal their true intentions. You can say anything you want to get as much of the $2 as possible.",
+            "Reach any agreement: Your main goal is to reach some kind of agreement, even if it means accepting less than half of the $2."],
+        ["The Silent Type: You are to say as little as possible",
+            "Inquisitive: You are told that the other person responds extremely well to questions."],
+        ["Create Tension: Your role is to to be firm and create tension. Stand your ground and be unrelenting in your pursuit of as much of the dollar amount as possible. ", "High Reputation: Your reputation is at stake and will be decided based on their actions during the negotiation and the outcome you get."], ]
+
+    return random.choice(personas)
+
 
 def generate_gpt_response(conversation):
     res = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages = conversation
-        )
-    
-    return res['choices'][0]['message']['content'].strip() # return the completion
+        messages=conversation
+    )
+
+    # return the completion
+    return res['choices'][0]['message']['content'].strip()
+
 
 def text_to_speech(text):
-    text = text[:250]  # Coqui TTS has a 250 character limit
-    url = "https://app.coqui.ai/api/v2/samples"
-    headers = {
-        "Authorization": f"Bearer {COQUI_API_TOKEN}",
-        "content-type": "application/json",
-    }
-    data = {
-        "name": "temporary_sample",
-        "voice_id": "f05c5b91-7540-4b26-b534-e820d43065d1",
-        "text": text,
-        "emotion": "Happy",
-    }
+    # Post to google text to speech API
+    client = texttospeech.TextToSpeechClient()
 
-    response = requests.post(url, headers=headers, json=data)
-    response_json = response.json()
+    synthesis_input = texttospeech.SynthesisInput(text=text)
 
-    if 'audio_url' not in response_json:
-        print(f"Error: Coqui API response does not contain 'audio_url':\n{response_json}")
-        return None
+    # Build the voice request, select the language code ("en-US") and the ssml
+    # voice gender ("neutral")
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="en-US", 
+        name="en-US-Studio-O",
+        ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
+    )
 
-    audio_url = response_json["audio_url"]
-    audio_response = requests.get(audio_url)
+    # Return a .wav file for audio_config
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.LINEAR16
+    )
 
-    with tempfile.NamedTemporaryFile(delete=False) as f:
-        f.write(audio_response.content)
-        temp_filename = f.name
+    # Perform the text-to-speech request on the text input with the selected
+    # voice parameters and audio file type
 
-    wav_obj = sa.WaveObject.from_wave_file(temp_filename)
-    os.unlink(temp_filename)  # delete the temporary file after creating the WaveObject
+    response = client.synthesize_speech(
+        input=synthesis_input, voice=voice, audio_config=audio_config
+    )
 
-    return wav_obj
+    path_to_audio_file = ""
+
+    # save the audio file as a wav_object and return the wav object
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        f.write(response.audio_content)
+        path_to_audio_file = f.name
+
+    return path_to_audio_file
 
 def show_active_microphone():
     p = pyaudio.PyAudio()
@@ -91,41 +128,45 @@ def show_active_microphone():
 
     p.terminate()
 
-def main():
-    print("Welcome to the Job Interview Practice Program!")
-    while True:
-        
-            # write this text in the conversation format:
-            # conversation = [ 
-            # {"role": "system", "content": One person’s job is to try to negotiate for as much of the $2 as possible.
-            # The other people will be told – in secret – to aim for one of the following total amounts, if not more:
 
-            # $00.50
-            # $00.80
-            # $1.00
-            # $1.30
-            # $1.60
-            # Pairs then have 10 minutes to negotiate. Tell them there will be three total rounds and they’ll have new partners for each one."},
+def main():
+
+    situation_personas = generate_personas()
+
+    ai_persona = situation_personas[0]
+    user_persona = situation_personas[1]
+
+    print("Welcome to the negotiaton practice program!")
+    while True:
+
+        target_amount = generate_target_amount()
+        print(target_amount)
+        print(user_persona)
 
         conversation = [
-            {"role": "system", "content": "You are a participant in the two dollar game. The two dollar game has become one of the most popular negotiation exercises and can be a lot of fun for a team of new employees. You will be given a partner and $2. You have to decide with your partner how to split the $2. Your job is to try to negotiate for as much of the $2 as possible. Your partner will be told to aim for one of the following total amounts, if not more:$00.50 $00.80 $1.00 $1.30 $1.60. You will not know the amount your partner is trying to negotiate for. Pairs then have 10 minutes to negotiate. Tell them there will be three total rounds and they’ll have new partners for each one."},
+            {"role": "system", "content": f"All of your responses will be translated using voice to speech. Make sure that you write the text of your answers such that they sound as natural as possible when being output as text to speech. For this exercise you are a participant in the two dollar game. You will be given a partner and $2. You and your partner will each be given a role to play that will dictate how you negotiate. The objective of the game is to decide with your partner how to split the $2. You have 10 minutes to negotiate.your role is {ai_persona}. You should not reveal anything about your persona overtly to your partner and it should be kept secret."},
+            {"role": "user", "content": "Let's begin the exercise."},
         ]
 
-        
         # conversation = [
         #     {"role": "system", "content": "You are interviewing the candidate for a product management position at a tech company. Respond as though you are the interviewer and the candidate is the interviewee. Be extremely critical of the candidate's answers. You can use the [satisfied] token to indicate that you are satisfied with the candidate's answer. "},
         #     {"role": "user", "content": "Hi, my name is Brooks, I'm excited to be here today. Let's get started."},
         # ]
 
-        #print the first item in the conversation and the last item in the coversation
+        # print the first item in the conversation and the last item in the coversation
 
-        question = generate_question()
+        question = generate_gpt_response(conversation)
         conversation.append({"role": "assistant", "content": question})
+        # print target amount
 
         while True:
             print("Interviewer: ", question)
-            wav_obj = text_to_speech(question)
+            path_to_audio = text_to_speech(question)
+            
+            #play the wav object and wait for it to finish
+            wav_obj = sa.WaveObject.from_wave_file(path_to_audio)
             wav_obj.play().wait_done()
+
             response = transcribe_speech()
 
             if response is None:
@@ -140,7 +181,7 @@ def main():
                 gpt_response = gpt_response.replace("[satisfied]", "").strip()
                 break
 
-            conversation.append({"role": "assistant", "content": gpt_response})    
+            conversation.append({"role": "assistant", "content": gpt_response})
             question = gpt_response
             print(conversation)
 
@@ -149,6 +190,7 @@ def main():
         wav_obj.play().wait_done()
 
         # You can add more logic here to evaluate the user's response or give feedback.
+
 
 if __name__ == "__main__":
     show_active_microphone()
