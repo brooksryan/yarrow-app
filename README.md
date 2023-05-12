@@ -13,43 +13,41 @@ cd Conversational_AI_Assistant
 ```bash
 pip install -r requirements.txt
 ``` 
-You will also need to install some additional software dependencies:
+3. **You will also need to install some additional software dependencies:**
 
 PortAudio: This is used by PyAudio, which is required to access the microphone. You can install it using the following command:
 
 On Ubuntu:
-bash
-Copy code
+```bash
 sudo apt-get install portaudio19-dev
+```
 On macOS:
-bash
-Copy code
+```bash
 brew install portaudio
 ffmpeg: This is required for the audio processing. You can install it using the following command:
-
+```
 On Ubuntu:
-bash
-Copy code
+```bash
 sudo apt-get install ffmpeg
+```
 On macOS:
-bash
-Copy code
+```bash
 brew install ffmpeg
-You need to set up your environment variables for the application to work. This includes your Coqui API token, Google Cloud API token, and OpenAI API token.
+```
+4. **You need to set up your environment variables for the application to work. This includes your Coqui API token, Google Cloud API token, and OpenAI API token.**
 
 Create a .env file in your project directory and add the following lines (replace <YOUR_TOKEN> with your actual tokens):
 
-bash
-Copy code
+```bash
 COQUI_API_TOKEN=<YOUR_COQUI_API_TOKEN>
 GOOGLE_API_TOKEN=<YOUR_GOOGLE_API_TOKEN>
 OPENAI_API_TOKEN=<YOUR_OPENAI_API_TOKEN>
-You can now run the assistant:
+```
+5. **You can now run the assistant:**
 
-bash
-Copy code
+```bash
 python main.py
-Usage
-Once you run the assistant, it will prompt you with a message indicating that it's ready to start. The assistant will then provide a situation and personas for the interaction. You will interact with the assistant verbally, and it will respond in kind.
+```
 
-If the assistant doesn't understand your response, it may ask you to repeat or rephrase your input.
+## Usage
+Once you run the assistant, it will prompt you with a message indicating that it's ready to start. The assistant will then provide a situation and personas for the interaction. You will interact with the assistant verbally, and it will respond in kind.
