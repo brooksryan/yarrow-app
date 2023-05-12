@@ -18,20 +18,20 @@ pip install -r requirements.txt
 
 PortAudio: This is used by PyAudio, which is required to access the microphone. You can install it using the following command:
 
-On Ubuntu:
+On Ubuntu 🐧:
 ```bash
 sudo apt-get install portaudio19-dev
 ```
-On macOS:
+On macOS 🍎:
 ```bash
 brew install portaudio
 ```
 ffmpeg: This is required for the audio processing. You can install it using the following command:
-On Ubuntu:
+On Ubuntu 🐧:
 ```bash
 sudo apt-get install ffmpeg
 ```
-On macOS:
+On macOS 🍎:
 ```bash
 brew install ffmpeg
 ```
