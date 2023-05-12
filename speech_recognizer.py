@@ -8,9 +8,6 @@ import pyaudio
 import openai
 from google.cloud import texttospeech
 
-COQUI_API_TOKEN = "py00vG5IM940cT8J5g2cio9UFXfmNKKMOCXciZdzm3qoxJMu419AuNbiALzDguDC"
-GOOGLE_API_TOKEN = "30bb5b66d16a57378be521c20051b03a77ba031f"
-
 
 def transcribe_speech():
     r = sr.Recognizer()
@@ -30,8 +27,8 @@ def transcribe_speech():
 
 def generate_question():
     question = [
-        # "Hi, my name is Yarrow. I'm an AI designed to interview you about your product management experience. Let's dive into your background a little. Can you tell me about your work experience and how it relates to product management?",
-        "Hi, my name is Yarrow. Are you ready to get started playing the $2 game with me? Do you have your target amount in mind?",
+         "Hi, my name is Yarrow. I'm an AI designed to interview you about your product management experience. Let's dive into your background a little. Can you tell me about your work experience and how it relates to product management?",
+        #"Hi, my name is Yarrow. Are you ready to get started playing the $2 game with me? Do you have your target amount in mind?",
     ]
     return random.choice(question)
 
@@ -65,7 +62,7 @@ def generate_personas():
 
 def generate_gpt_response(conversation):
     res = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         messages=conversation
     )
 
@@ -133,8 +130,9 @@ def main():
 
     situation_personas = generate_personas()
 
-    ai_persona = situation_personas[0]
-    user_persona = situation_personas[1]
+    # set the ai persona randomly to either situation_persona[0] or situation_persona[1]. assign the other persona to the user
+    ai_persona = random.choice(situation_personas)
+    user_persona = situation_personas[0] if ai_persona == situation_personas[1] else situation_personas[1]
 
     print("Welcome to the negotiaton practice program!")
     while True:
@@ -143,15 +141,18 @@ def main():
         print(target_amount)
         print(user_persona)
 
-        conversation = [
-            {"role": "system", "content": f"All of your responses will be translated using voice to speech. Make sure that you write the text of your answers such that they sound as natural as possible when being output as text to speech. For this exercise you are a participant in the two dollar game. You will be given a partner and $2. You and your partner will each be given a role to play that will dictate how you negotiate. The objective of the game is to decide with your partner how to split the $2. You have 10 minutes to negotiate.your role is {ai_persona}. You should not reveal anything about your persona overtly to your partner and it should be kept secret."},
-            {"role": "user", "content": "Let's begin the exercise."},
-        ]
-
+        # ------ NEGOITATION GAME INSTRUCTIONS AND PERSONA ASSIGNMENT ------ #
         # conversation = [
-        #     {"role": "system", "content": "You are interviewing the candidate for a product management position at a tech company. Respond as though you are the interviewer and the candidate is the interviewee. Be extremely critical of the candidate's answers. You can use the [satisfied] token to indicate that you are satisfied with the candidate's answer. "},
-        #     {"role": "user", "content": "Hi, my name is Brooks, I'm excited to be here today. Let's get started."},
+        #     {"role": "system", "content": f"All of your responses will be translated using voice to speech. Make sure that your responses are worded exactly like a human would speak them. For this exercise you are a participant in the two dollar game. You will be given a partner and $2. You and your partner will each be given a role to play that will dictate how you negotiate. The objective of the game is to decide with your partner how to split the $2. You have 10 minutes to negotiate.your role is {ai_persona}. You will never reveal your persona or your objectives to your partner. Your persona and objectives are secret. Additionally your persona is that of a 35 year old woman with an advanced college degree and your tone, word choice, and affectation should reflect that."},
+        #     {"role": "user", "content": "Let's begin the exercise. Remember, you will never explicitly reference or reveal your persona to your partner."},
         # ]
+        
+        
+        # ------ INTERVIEWING AI ------ #
+        conversation = [
+            {"role": "system", "content": "You are interviewing the candidate for a product management position at a tech company. Respond as though you are the interviewer and the candidate is the interviewee. Be extremely critical of the candidate's answers. You can use the [satisfied] token to indicate that you are satisfied with the candidate's answer. "},
+            {"role": "user", "content": "Hi, my name is Brooks, I'm excited to be here today. Let's get started."},
+        ]
 
         # print the first item in the conversation and the last item in the coversation
 
