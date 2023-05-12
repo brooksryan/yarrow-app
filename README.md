@@ -27,6 +27,7 @@ On macOS 🍎:
 brew install portaudio
 ```
 ffmpeg: This is required for the audio processing. You can install it using the following command:
+
 On Ubuntu 🐧:
 ```bash
 sudo apt-get install ffmpeg
