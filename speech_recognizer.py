@@ -1,198 +1,111 @@
-import os
-import tempfile
-import random
-import speech_recognition as sr
-import simpleaudio as sa
-import requests
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel
+from PyQt5.QtCore import Qt
+import sys
+
 import pyaudio
-import openai
-from google.cloud import texttospeech
+import sqlite3
+from random_pm_question import generate_random_question as generate_question
+from ai_analysis import create_and_play_ai_response
+from user_speech_to_text import transcribe_speech
+
+def create_GUI(main_function):
+    app = QApplication([])
+
+    window = QWidget()
+    window.setWindowTitle("Interview Practice")
+
+    layout = QVBoxLayout()
+
+    welcome_label = QLabel("Hello and welcome to the interview")
+    layout.addWidget(welcome_label)
+
+    run_main = False
+
+    def start_main():
+        nonlocal run_main
+        run_main = True
+        main(run_main)
+
+    def stop_main():
+        nonlocal run_main
+        run_main = False
+
+    start_button = QPushButton('Start')
+    start_button.clicked.connect(start_main)
+    layout.addWidget(start_button)
+
+    stop_button = QPushButton('Stop')
+    stop_button.clicked.connect(stop_main)
+    layout.addWidget(stop_button)
+
+    window.setLayout(layout)
+    window.show()
+
+    sys.exit(app.exec())
+
+def insert_message(conversation_id, message_id, role, content):
+    conn = sqlite3.connect('conversations.db')
+    c = conn.cursor()
+
+    c.execute('''
+        INSERT INTO messages(conversation_id, message_id, role, content)
+        VALUES (?, ?, ?, ?)
+    ''', (conversation_id, message_id, role, content))
+
+    conn.commit()
+    conn.close()
 
 
-def transcribe_speech():
-    r = sr.Recognizer()
-    with sr.Microphone() as source:
-        print("Please say something...")
-        audio = r.listen(source)
-    try:
-        text = r.recognize_google(audio)
-        print(f"You said: {text}")
-        return text
-    except:
-        print("Sorry, I didn't catch that. Please try again.")
-        return None
+def main(run_main):
+    if run_main:
 
-# Generate a random question for the user
+        print("Welcome to the negotiaton practice program!")
 
+        # create starting question
+        starting_question = generate_question()
+        print(starting_question)
 
-def generate_question():
-    question = [
-         "Hi, my name is Yarrow. I'm an AI designed to interview you about your product management experience. Let's dive into your background a little. Can you tell me about your work experience and how it relates to product management?",
-        #"Hi, my name is Yarrow. Are you ready to get started playing the $2 game with me? Do you have your target amount in mind?",
-    ]
-    return random.choice(question)
+        while run_main:
 
+            # ------ INTERVIEWING AI ------ #
 
-def generate_target_amount():
-    target_amount = [
-        "I'm aiming for $1.60",
-        "I'm aiming for $1.30",
-        "I'm aiming for $1.00",
-        "I'm aiming for $0.80",
-        "I'm aiming for $0.50",
-    ]
-    return random.choice(target_amount)
+            # This is the prompt that the AI will use to start the conversation. It can be changed to anything you want. Currently it is set to introduce the AI and ask the user to tell them about their work experience.
+            conversation = [
+                {"role": "system", "content": f"Your name is Yarrow and you are interviewing the candidate for a product management position at a tech company. Your responses wi The candidate's name is Brooks. Respond as though you are the interviewer and the candidate is the interviewee. Be extremely critical of the candidate's answers. The first question you should ask the candidate is: {starting_question}"},
+                {"role": "user", "content": "Hi, my name is Brooks, I'm excited to be here today. Let's get started."},
+            ]
 
+            # In the future I want to improve the AI prompting or spawn a secondary AI to continuously evaluate the user's responses
 
-def generate_personas():
+            while True:
+                print("starting loop")
+                ai_text_response, path_to_audio = create_and_play_ai_response(
+                    conversation)
+                print("Interviewer: ", ai_text_response)
+                print("path to audio: ", path_to_audio)
 
-    personas = [
-        ["Freewheeling: You can say anything they want to get as much of the $2.",
-            "No Bother: You don’t actually need to reach a settlement. You will have another chance to negotiate with a new partner in the next round."],
-        ["Ruthless Negotiator: Your role is to play the role of a ruthless negotiator. Your attitude should be aggressive and uncompromising. You can say anything you want to get as much of the $2 as possible. You will never see your partner again. Include threats in your negotiation if necessary.",
-            "Everyone is watching:Your partner is playing the ruthless negotiator, and you'll never see this ruthless negotiator again, but everyone you know is waiting to see how well you’ll do. you can say anything you want to get as much of the $2 as possible."],
-        ["Distrustful: Your partner is untrustworthy. Treat your partner as so. be standoffish and always assume that your partner has an ulterior motive. Probe and ask uncomfortable questions of your partner to try and get them to reveal their true intentions. You can say anything you want to get as much of the $2 as possible.",
-            "Reach any agreement: Your main goal is to reach some kind of agreement, even if it means accepting less than half of the $2."],
-        ["The Silent Type: You are to say as little as possible",
-            "Inquisitive: You are told that the other person responds extremely well to questions."],
-        ["Create Tension: Your role is to to be firm and create tension. Stand your ground and be unrelenting in your pursuit of as much of the dollar amount as possible. ", "High Reputation: Your reputation is at stake and will be decided based on their actions during the negotiation and the outcome you get."], ]
+                if "[satisfied]" in ai_text_response:
+                    ai_text_response = ai_text_response.replace(
+                        "[satisfied]", "").strip()
+                    break
+                
+                conversation.append(
+                    {"role": "assistant", "content": ai_text_response})
+                
+                insert_message("interview", len(conversation),
+                               "assistant", ai_text_response)
 
-    return random.choice(personas)
+                response = transcribe_speech()
 
+                if response is None:
+                    continue
 
-def generate_gpt_response(conversation):
-    res = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=conversation
-    )
+                conversation.append({"role": "user", "content": response})
+                insert_message("interview", len(
+                    conversation), "user", response)
+                print(conversation)
 
-    # return the completion
-    return res['choices'][0]['message']['content'].strip()
-
-
-def text_to_speech(text):
-    # Post to google text to speech API
-    client = texttospeech.TextToSpeechClient()
-
-    synthesis_input = texttospeech.SynthesisInput(text=text)
-
-    # Build the voice request, select the language code ("en-US") and the ssml
-    # voice gender ("neutral")
-    voice = texttospeech.VoiceSelectionParams(
-        language_code="en-US", 
-        name="en-US-Studio-O",
-        ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
-    )
-
-    # Return a .wav file for audio_config
-    audio_config = texttospeech.AudioConfig(
-        audio_encoding=texttospeech.AudioEncoding.LINEAR16
-    )
-
-    # Perform the text-to-speech request on the text input with the selected
-    # voice parameters and audio file type
-
-    response = client.synthesize_speech(
-        input=synthesis_input, voice=voice, audio_config=audio_config
-    )
-
-    path_to_audio_file = ""
-
-    # save the audio file as a wav_object and return the wav object
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-        f.write(response.audio_content)
-        path_to_audio_file = f.name
-
-    return path_to_audio_file
-
-def show_active_microphone():
-    p = pyaudio.PyAudio()
-    info = p.get_host_api_info_by_index(0)
-    numdevices = info.get('deviceCount')
-    default_device_index = p.get_default_input_device_info()["index"]
-
-    print("\nAvailable audio input devices:")
-    for i in range(0, numdevices):
-        device_info = p.get_device_info_by_host_api_device_index(0, i)
-        device_name = device_info.get("name")
-        device_index = device_info.get("index")
-
-        if device_info.get("maxInputChannels") > 0:  # This is an input device
-            if device_index == default_device_index:
-                print(f"* Device {i}: {device_name} (default)")
-            else:
-                print(f"  Device {i}: {device_name}")
-
-    p.terminate()
-
-
-def main():
-
-    situation_personas = generate_personas()
-
-    # set the ai persona randomly to either situation_persona[0] or situation_persona[1]. assign the other persona to the user
-    ai_persona = random.choice(situation_personas)
-    user_persona = situation_personas[0] if ai_persona == situation_personas[1] else situation_personas[1]
-
-    print("Welcome to the negotiaton practice program!")
-    while True:
-
-        target_amount = generate_target_amount()
-        print(target_amount)
-        print(user_persona)
-
-        # ------ NEGOITATION GAME INSTRUCTIONS AND PERSONA ASSIGNMENT ------ #
-        # conversation = [
-        #     {"role": "system", "content": f"All of your responses will be translated using voice to speech. Make sure that your responses are worded exactly like a human would speak them. For this exercise you are a participant in the two dollar game. You will be given a partner and $2. You and your partner will each be given a role to play that will dictate how you negotiate. The objective of the game is to decide with your partner how to split the $2. You have 10 minutes to negotiate.your role is {ai_persona}. You will never reveal your persona or your objectives to your partner. Your persona and objectives are secret. Additionally your persona is that of a 35 year old woman with an advanced college degree and your tone, word choice, and affectation should reflect that."},
-        #     {"role": "user", "content": "Let's begin the exercise. Remember, you will never explicitly reference or reveal your persona to your partner."},
-        # ]
-        
-        
-        # ------ INTERVIEWING AI ------ #
-        conversation = [
-            {"role": "system", "content": "You are interviewing the candidate for a product management position at a tech company. Respond as though you are the interviewer and the candidate is the interviewee. Be extremely critical of the candidate's answers. You can use the [satisfied] token to indicate that you are satisfied with the candidate's answer. "},
-            {"role": "user", "content": "Hi, my name is Brooks, I'm excited to be here today. Let's get started."},
-        ]
-
-        # print the first item in the conversation and the last item in the coversation
-
-        question = generate_gpt_response(conversation)
-        conversation.append({"role": "assistant", "content": question})
-        # print target amount
-
-        while True:
-            print("Interviewer: ", question)
-            path_to_audio = text_to_speech(question)
-            
-            #play the wav object and wait for it to finish
-            wav_obj = sa.WaveObject.from_wave_file(path_to_audio)
-            wav_obj.play().wait_done()
-
-            response = transcribe_speech()
-
-            if response is None:
-                continue
-
-            conversation.append({"role": "user", "content": response})
-
-            # Generate response from GPT
-            gpt_response = generate_gpt_response(conversation)
-
-            if "[satisfied]" in gpt_response:
-                gpt_response = gpt_response.replace("[satisfied]", "").strip()
-                break
-
-            conversation.append({"role": "assistant", "content": gpt_response})
-            question = gpt_response
-            print(conversation)
-
-        print("Interviewer: ", gpt_response)
-        wav_obj = text_to_speech(gpt_response)
-        wav_obj.play().wait_done()
-
-        # You can add more logic here to evaluate the user's response or give feedback.
-
-
+        pass
+    run_main = False
 if __name__ == "__main__":
-    show_active_microphone()
-    main()
+    create_GUI(main)
