@@ -1,109 +1,130 @@
-import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QProgressDialog, QTabWidget
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
 import uuid
 import sqlite3
 
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QTextEdit, QProgressDialog
-from PyQt5.QtCore import Qt
 from random_pm_question import generate_random_question as generate_question
-from ai_analysis import create_and_play_ai_response
+from ai_response import create_and_play_ai_response
 from user_speech_to_text import transcribe_speech
+from ai_evaluation import parse_and_evaluate_conversation
 
 
-# We create a MainWindow class that inherits from QWidget which is a base class for all user interface objects, or "widgets".
-class MainWindow(QWidget):
-    def __init__(self, main_function):  # Here we initialize our MainWindow object
-        super().__init__()  # We call the initializer of QWidget class
+class CurrentConversationTab(QWidget):
+    def __init__(self, main_window):
+        super().__init__()
 
-        # We assign our main function to a class variable, so we can use it later
-        self.main_function = main_function
-        
-        # This boolean will represent whether our conversation is active
-        self.run_main = False
-        
-        # This will hold our conversation
-        self.conversation = []
-        
-        # This will hold the starting question
-        self.starting_question = ""
+        self.main_window = main_window
 
-        self.conversation_id = ""
+        self.layout = QVBoxLayout(self)
 
-        # We set the title of the main window
-        self.setWindowTitle("Interview Practice")
-
-        # We create a vertical layout that we will add our widgets to
-        self.layout = QVBoxLayout()
-        # We create a label
         self.label = QLabel("Hello and welcome to the interview")
-        # We create a start button
         self.start_button = QPushButton("Start")
-        # We create a stop button
         self.stop_button = QPushButton("Stop")
-        # We create a button that will trigger the AI response
         self.ai_response_button = QPushButton("Generate AI Response")
-        # We create a button that will trigger speech transcription
         self.transcribe_button = QPushButton("Transcribe Speech")
-        # Create a QTextEdit widget to display the conversation
-        self.conversation_display = QTextEdit()
-        # Set the widget to read-only so it can't be edited by the user
-        self.conversation_display.setReadOnly(True)
+        self.conversation_display = QWebEngineView()
+        
+        # Initialize with an empty HTML document
+        self.conversation_display.setHtml("<html><body></body></html>")
 
-        # We add our widgets to the layout
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.start_button)
         self.layout.addWidget(self.stop_button)
-        # add the buttons for the AI response and speech transcription
         self.layout.addWidget(self.ai_response_button)
         self.layout.addWidget(self.transcribe_button)
-        # We add the conversation display to the layout
         self.layout.addWidget(self.conversation_display)
 
-        # We hide the buttons for the AI response and speech transcription
         self.ai_response_button.hide()
         self.transcribe_button.hide()
         self.conversation_display.hide()
 
-        # We connect our buttons to their respective methods
-        self.start_button.clicked.connect(self.start_main)
-        self.stop_button.clicked.connect(self.stop_main)
-        self.ai_response_button.clicked.connect(self.ai_response)
-        self.transcribe_button.clicked.connect(self.transcribe_speech)
+        self.start_button.clicked.connect(self.main_window.start_main)
+        self.stop_button.clicked.connect(self.main_window.stop_main)
+        self.ai_response_button.clicked.connect(self.main_window.ai_response)
+        self.transcribe_button.clicked.connect(
+            self.main_window.transcribe_speech)
 
-        # We set the layout of the main window to our created layout
         self.setLayout(self.layout)
 
-    # This method is called when the start button is clicked
+class PastConversationsTab(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.layout = QVBoxLayout(self)
+        self.setLayout(self.layout)
+
+
+class MainWindow(QWidget):
+    def __init__(self, main_function):
+        super().__init__()
+        self.resize(800, 600)
+        self.main_function = main_function
+        self.run_main = False
+        self.conversation = []
+        self.starting_question = ""
+        self.conversation_id = ""
+        self.setWindowTitle("Interview Practice")
+
+        self.tab_widget = QTabWidget()
+        self.layout = QVBoxLayout(self)
+
+        self.current_conversation_tab = CurrentConversationTab(self)
+        self.past_conversations_tab = PastConversationsTab()
+
+        self.tab_widget.addTab(
+            self.current_conversation_tab, "Current Conversation")
+        self.tab_widget.addTab(
+            self.past_conversations_tab, "Past Conversations")
+
+        self.layout.addWidget(self.tab_widget)
+        self.setLayout(self.layout)
+
+    # All your MainWindow methods follow here...
+
+# This method is called when the start button is clicked
     def start_main(self):
         self.run_main = True  # We start our conversation
 
-        #create a randon unique ID for the conversation
+        # create a random unique ID for the conversation
         self.conversation_id = str(uuid.uuid4())
 
-        self.ai_response_button.show() # We show the buttons for the AI response and speech transcription
-        self.transcribe_button.show() 
-        self.conversation_display.show() # We show the conversation display
+        # We show the buttons for the AI response and speech transcription
+        self.current_conversation_tab.ai_response_button.show()
+        self.current_conversation_tab.transcribe_button.show()
+        # We show the conversation display
+        self.current_conversation_tab.conversation_display.show()
 
-        self.conversation, self.starting_question = self.main_function()  # We initialize a new conversation
-        self.label.setText(self.starting_question)  # We set the label to the first question
+        # We initialize a new conversation
+        self.conversation, self.starting_question = self.main_function()
+        self.current_conversation_tab.label.setText(
+            self.starting_question)  # We set the label to the first question
         
-        # We add the buttons for the AI response and speech transcription
-
-        
-
+        self.ai_response()  # We generate an AI response to the first question
 
     # This method is called when the stop button is clicked
+
+
     def stop_main(self):
         self.run_main = False  # We stop our conversation
-        self.label.setText("Hello and welcome to the interview")  # We reset the label
+        self.current_conversation_tab.label.setText(
+            "Hello and welcome to the interview")  # We reset the label
         self.conversation = []  # We reset the conversation
         self.starting_question = ""  # We reset the starting question
-        self.conversation_id = "" # We reset the conversation ID
+        self.conversation_id = ""  # We reset the conversation ID
+
         # we remove the buttons for the AI response and speech transcription
-        self.ai_response_button.hide()
-        self.transcribe_button.hide()
-        self.conversation_display.hide()
+        self.current_conversation_tab.ai_response_button.hide()
+        self.current_conversation_tab.transcribe_button.hide()
+
+        # clear the converstaion display
+        self.current_conversation_tab.conversation_display.clear()
+        self.current_conversation_tab.conversation_display.hide()
 
     # This method is called when the "Generate AI Response" button is clicked
+
+
     def ai_response(self):
         if self.run_main:  # We generate an AI response only if a conversation is active
             # Create a QProgressDialog
@@ -114,17 +135,21 @@ class MainWindow(QWidget):
             # Show the progress dialog
             progress.show()
             QApplication.processEvents()
-            ai_text_response, path_to_audio = create_and_play_ai_response(self.conversation)
+            ai_text_response, path_to_audio = create_and_play_ai_response(
+                self.conversation)
             # Close the progress dialog
             progress.cancel()
             print("Interviewer: ", ai_text_response)
             print("path to audio: ", path_to_audio)
-            self.conversation.append({"role": "assistant", "content": ai_text_response})
-            insert_message(self.conversation_id, len(self.conversation), "assistant", ai_text_response)
+            insert_message(self.conversation_id, len(
+                self.conversation), "assistant", ai_text_response)
+            self.add_message_to_display("blue", "AI", ai_text_response)
+
             # We add the AI response to the conversation display
-            self.conversation_display.append(f"AI: {ai_text_response}")
 
     # This method is called when the "Transcribe Speech" button is clicked
+
+
     def transcribe_speech(self):
         if self.run_main:  # We transcribe speech only if a conversation is active
             response = transcribe_speech()
@@ -132,9 +157,33 @@ class MainWindow(QWidget):
                 self.conversation.append({"role": "user", "content": response})
                 insert_message(self.conversation_id, len(
                     self.conversation), "user", response)
-                # We add the user response to the conversation display
-                self.conversation_display.append(f"User: {response}")
 
+                # We add the user response to the conversation display
+                self.add_message_to_display("red", "User", response)
+                
+                # We evaluate the user response
+                score, qualitative_feedback = parse_and_evaluate_conversation(self.conversation)
+
+                # We add the evaluation to the conversation display
+                self.add_message_to_display("Green", "Evaluation", f"Score: {score}")
+                self.add_message_to_display("Green", "Evaluation", f"Qualitative Feedback: {qualitative_feedback}")
+                
+    def add_message_to_display(self, color, role, message):
+        # Format the message as an HTML string
+        html_message = f"""
+            <div style='margin-top: 0; margin-bottom: 10px;'>
+                <p style='color: {color}; margin: 0; font-weight: bold;'>{role}</p>
+                <p style='margin-top: 2px;'>{message}</p>
+            </div>
+        """
+        # Insert the HTML string into the current page
+        self.current_conversation_tab.conversation_display.page().runJavaScript(f"""
+            var body = document.querySelector('body');
+            var div = document.createElement('div');
+            div.innerHTML = `{html_message}`;
+            body.appendChild(div);
+        """)
+                
 
 def insert_message(conversation_id, message_id, role, content):
     conn = sqlite3.connect('conversations.db')
@@ -163,6 +212,10 @@ def create_conversation():
 if __name__ == "__main__":
     # We create a QApplication, which is necessary for any PyQt5 application
     app = QApplication([])
+
+    with open('style.qss', 'r') as file:
+        app.setStyleSheet(file.read())
+
     # We create our MainWindow, passing in our create conversation function
     win = MainWindow(create_conversation)
     win.show()  # We show our MainWindow
