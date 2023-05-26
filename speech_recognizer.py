@@ -10,8 +10,8 @@ from ai_response import create_and_play_ai_response
 from user_speech_to_text import transcribe_speech
 from ai_evaluation import parse_and_evaluate_conversation
 
-
-class CurrentConversationTab(QWidget):
+# 
+class CurrentConversationTab(QWidget): 
     def __init__(self, main_window):
         super().__init__()
 
@@ -152,14 +152,14 @@ class MainWindow(QWidget):
 
     def transcribe_speech(self):
         if self.run_main:  # We transcribe speech only if a conversation is active
-            response = transcribe_speech()
+            response = transcribe_speech() # We transcribe the user's speech
             if response is not None:
-                self.conversation.append({"role": "user", "content": response})
+                self.conversation.append({"role": "user", "content": response}) # We add the user response to the conversation
                 insert_message(self.conversation_id, len(
-                    self.conversation), "user", response)
+                    self.conversation), "user", response) # We add the user response to the database
 
                 # We add the user response to the conversation display
-                self.add_message_to_display("red", "User", response)
+                self.add_message_to_display("red", "User", response) 
                 
                 # We evaluate the user response
                 score, qualitative_feedback = parse_and_evaluate_conversation(self.conversation)

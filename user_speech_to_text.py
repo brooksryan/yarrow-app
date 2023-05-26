@@ -22,7 +22,7 @@ def show_active_microphone():
     p.terminate()
 
 def transcribe_speech():
-    
+
     show_active_microphone()
     r = sr.Recognizer()
     
@@ -38,3 +38,18 @@ def transcribe_speech():
     except:
         print("Sorry, I didn't catch that. Please try again.")
         return None
+
+def record_audio_from_microphone ():
+
+    # start recording user audio
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Please say something...")
+        audio = r.listen(source)
+    
+    # after user finishes speaking wait 5 seconds and then stop recording
+    print("Recording stopped.")
+
+
+
+    return path_to_audio_file

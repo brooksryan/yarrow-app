@@ -16,3 +16,4 @@ def generate_random_question():
     return random.choice(questions)
 
 print(generate_random_question())
+
