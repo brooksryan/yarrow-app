@@ -2,6 +2,7 @@
 Yarrow is an innovative platform pushing boundaries in negotiation skills and interview preparation. With the backing of advanced AI models, Yarrow provides a distinct environment for conversation simulation, ensuring readiness for real-world interactions. Its design encompasses a rich array of prompts, challenges, and responses, fostering dynamic conversations that evolve with your input.
 
 Yarrow is your personal assistant for role-playing scenarios, from hard-nosed negotiation exercises to critical interview question practice. Interaction with Yarrow leads to learning, adaptation, and response refinement, tailoring dialogue flow for individual pacing and style. This platform exceeds typical correct answer focus, promoting skill enhancement and confidence in communication. Embark on your journey with Yarrow and encounter a superior standard in conversation practice.
+
  <img src="yarrow-screenshot.png" width="500" title="hover text">
 
 # Things we're building next
