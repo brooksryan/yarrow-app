@@ -2,7 +2,8 @@
 Yarrow is an innovative platform pushing boundaries in negotiation skills and interview preparation. With the backing of advanced AI models, Yarrow provides a distinct environment for conversation simulation, ensuring readiness for real-world interactions. Its design encompasses a rich array of prompts, challenges, and responses, fostering dynamic conversations that evolve with your input.
 
 Yarrow is your personal assistant for role-playing scenarios, from hard-nosed negotiation exercises to critical interview question practice. Interaction with Yarrow leads to learning, adaptation, and response refinement, tailoring dialogue flow for individual pacing and style. This platform exceeds typical correct answer focus, promoting skill enhancement and confidence in communication. Embark on your journey with Yarrow and encounter a superior standard in conversation practice.
- <img src="yarrow-screenshot.png" width="500" title="hover text">
+
+ <img src="yarrow-screenshot.png" width="500" title="Screenshot of the main yarrow app">
 
 # Things we're building next
 * **Conversation History**: "Let me review all of the questions I've been asked, my answers, and the rating of those answers"
@@ -62,10 +63,3 @@ python main.py
 
 ## Usage
 Once you run the assistant, it will prompt you with a message indicating that it's ready to start. The assistant will then provide a situation and personas for the interaction. You will interact with the assistant verbally, and it will respond in kind.
-
-## Things we're building next
-* **Conversation History**: "Let me review all of the questions I've been asked, my answers, and the rating of those answers"
-* **Interview performance trends**: "How have my interview performances trended over time based on the AI evaluation?"
-* **Custom interivew questions**: "I want to be able to tailor the questions I'm asked to the specific interview I'm practicing for"
-* **Interview suites**: "I want to create a set of questions that I want to answer in order so that the practice feels more like a real interview" 
-
