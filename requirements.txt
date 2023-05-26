@@ -105,6 +105,11 @@ Pygments==2.15.1
 pynndescent==0.5.10
 pyparsing==3.0.9
 pypinyin==0.48.0
+PyQt5==5.15.9
+PyQt5-Qt5==5.15.2
+PyQt5-sip==12.12.1
+PyQtWebEngine==5.15.6
+PyQtWebEngine-Qt5==5.15.2
 pysbd==0.3.4
 python-crfsuite==0.9.9
 python-dateutil==2.8.2

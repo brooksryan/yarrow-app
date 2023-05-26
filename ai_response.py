@@ -60,6 +60,7 @@ def play_audio_file(path_to_audio_file):
     wav_obj.play().wait_done()
 
 
+# takes in a conversation and returns text and an audio file to be played
 def create_and_play_ai_response(conversation):
     # Generate a response from GPT-3
     gpt3_response = generate_gpt_response(conversation)
