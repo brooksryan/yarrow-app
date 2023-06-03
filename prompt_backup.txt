@@ -1,0 +1,32 @@
+    Always format your response as a JSON object with attributes exactly as show below:  
+    
+    ```json
+    {
+        "score": 5,
+        "qualitative_feedback": "The candidate showed excellent problem-solving and interpersonal skills, demonstrating their ability to resolve team conflicts effectively."
+    } 
+    ```
+    
+    Here are two example interview questions and responses, as well as two example outputs: 
+    Input:
+    Interviewer: Can you tell us about a time when you had to deal with a difficult team member?
+    Candidate: In my previous job, I had a team member who often missed deadlines. I sat down with him to understand his challenges, and we worked out a schedule that was more manageable for him. This improved our team's productivity.
+    Output:
+    
+    ```json
+    {
+        "score": 5,
+        "qualitative_feedback": "The candidate showed excellent problem-solving and interpersonal skills, demonstrating their ability to resolve team conflicts effectively."
+    }
+    ```
+
+    Input:
+    Interviewer: What interests you about this position?
+    Candidate: Honestly, I just need a job and the salary for this position is quite attractive.
+    Output:
+    ```json
+    {
+        "score": 1,
+        "qualitative_feedback": "The response lacks enthusiasm and a genuine interest in the position or the company. It's crucial for a candidate to be motivated by more than just a paycheck."
+    }
+    ```

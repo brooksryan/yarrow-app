@@ -1,17 +1,20 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QProgressDialog, QTabWidget
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+import sqlite3
+import uuid
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-import uuid
-import sqlite3
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWidgets import (QApplication, QLabel, QProgressDialog,
+                             QPushButton, QTabWidget, QVBoxLayout, QWidget)
 
-from random_pm_question import generate_random_question as generate_question
-from ai_response import create_and_play_ai_response
-from user_speech_to_text import transcribe_speech
 from ai_evaluation import parse_and_evaluate_conversation
+from ai_response import create_and_play_ai_response
+from random_pm_question import generate_random_question as generate_question
+from user_speech_to_text import transcribe_speech
 
-# 
-class CurrentConversationTab(QWidget): 
+
+#
+class CurrentConversationTab(QWidget):
     def __init__(self, main_window):
         super().__init__()
 
@@ -25,7 +28,7 @@ class CurrentConversationTab(QWidget):
         self.ai_response_button = QPushButton("Generate AI Response")
         self.transcribe_button = QPushButton("Transcribe Speech")
         self.conversation_display = QWebEngineView()
-        
+
         # Initialize with an empty HTML document
         self.conversation_display.setHtml("<html><body></body></html>")
 
@@ -48,6 +51,7 @@ class CurrentConversationTab(QWidget):
 
         self.setLayout(self.layout)
 
+
 class PastConversationsTab(QWidget):
     def __init__(self):
         super().__init__()
@@ -56,7 +60,7 @@ class PastConversationsTab(QWidget):
         self.setLayout(self.layout)
 
 
-class MainWindow(QWidget):
+class MainWindow (QWidget): 
     def __init__(self, main_function):
         super().__init__()
         self.resize(800, 600)
@@ -100,11 +104,10 @@ class MainWindow(QWidget):
         self.conversation, self.starting_question = self.main_function()
         self.current_conversation_tab.label.setText(
             self.starting_question)  # We set the label to the first question
-        
+
         self.ai_response()  # We generate an AI response to the first question
 
     # This method is called when the stop button is clicked
-
 
     def stop_main(self):
         self.run_main = False  # We stop our conversation
@@ -123,7 +126,6 @@ class MainWindow(QWidget):
         self.current_conversation_tab.conversation_display.hide()
 
     # This method is called when the "Generate AI Response" button is clicked
-
 
     def ai_response(self):
         if self.run_main:  # We generate an AI response only if a conversation is active
@@ -149,25 +151,28 @@ class MainWindow(QWidget):
 
     # This method is called when the "Transcribe Speech" button is clicked
 
-
     def transcribe_speech(self):
         if self.run_main:  # We transcribe speech only if a conversation is active
-            response = transcribe_speech() # We transcribe the user's speech
+            response = transcribe_speech()  # We transcribe the user's speech
             if response is not None:
-                self.conversation.append({"role": "user", "content": response}) # We add the user response to the conversation
+                # We add the user response to the conversation
+                self.conversation.append({"role": "user", "content": response})
                 insert_message(self.conversation_id, len(
-                    self.conversation), "user", response) # We add the user response to the database
+                    self.conversation), "user", response)  # We add the user response to the database
 
                 # We add the user response to the conversation display
-                self.add_message_to_display("red", "User", response) 
-                
+                self.add_message_to_display("red", "User", response)
+
                 # We evaluate the user response
-                score, qualitative_feedback = parse_and_evaluate_conversation(self.conversation)
+                score, qualitative_feedback = parse_and_evaluate_conversation(
+                    self.conversation)
 
                 # We add the evaluation to the conversation display
-                self.add_message_to_display("Green", "Evaluation", f"Score: {score}")
-                self.add_message_to_display("Green", "Evaluation", f"Qualitative Feedback: {qualitative_feedback}")
-                
+                self.add_message_to_display(
+                    "Green", "Evaluation", f"Score: {score}")
+                self.add_message_to_display(
+                    "Green", "Evaluation", f"Qualitative Feedback: {qualitative_feedback}")
+
     def add_message_to_display(self, color, role, message):
         # Format the message as an HTML string
         html_message = f"""
@@ -183,7 +188,7 @@ class MainWindow(QWidget):
             div.innerHTML = `{html_message}`;
             body.appendChild(div);
         """)
-                
+
 
 def insert_message(conversation_id, message_id, role, content):
     conn = sqlite3.connect('conversations.db')
@@ -203,7 +208,7 @@ def create_conversation():
     starting_question = generate_question()
     print(starting_question)
 
-    starting_prompt = [{"role": "system", "content": f"Your name is Yarrow and you are interviewing the candidate for a product management position at a tech company. Your responses wi The candidate's name is Brooks. Respond as though you are the interviewer and the candidate is the interviewee. Be extremely critical of the candidate's answers. The first question you should ask the candidate is: {starting_question}"},
+    starting_prompt = [{"role": "system", "content": f"Your name is Yarrow and you are interviewing the candidate for an engineering position at a tech company. Your responses wi The candidate's name is Brooks. Respond as though you are the interviewer and the candidate is the interviewee. Be extremely critical of the candidate's answers. The first question you should ask the candidate is: {starting_question}"},
                        {"role": "user", "content": "Hi, my name is Brooks, I'm excited to be here today. Let's get started."}]
     return starting_prompt, starting_question
 
@@ -220,4 +225,3 @@ if __name__ == "__main__":
     win = MainWindow(create_conversation)
     win.show()  # We show our MainWindow
     app.exec()  # We start the event loop of our application
-

@@ -1,3 +1,8 @@
+# local test results
+evaluation_tests/
+evaluator_test_datasets/
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
